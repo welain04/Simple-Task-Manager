@@ -1,38 +1,58 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { todos, type Todo, type InsertTodo, type UpdateTodo } from "@shared/schema";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getTodos(): Promise<Todo[]>;
+  getTodo(id: number): Promise<Todo | undefined>;
+  createTodo(todo: InsertTodo): Promise<Todo>;
+  updateTodo(id: number, updates: UpdateTodo): Promise<Todo | undefined>;
+  deleteTodo(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<string, User>;
+  private todos: Map<number, Todo>;
+  private currentId: number;
 
   constructor() {
-    this.users = new Map();
+    this.todos = new Map();
+    this.currentId = 1;
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getTodos(): Promise<Todo[]> {
+    return Array.from(this.todos.values());
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getTodo(id: number): Promise<Todo | undefined> {
+    return this.todos.get(id);
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async createTodo(insertTodo: InsertTodo): Promise<Todo> {
+    const id = this.currentId++;
+    const todo: Todo = { ...insertTodo, id, completed: false };
+    this.todos.set(id, todo);
+    return todo;
+  }
+
+  async updateTodo(id: number, updates: UpdateTodo): Promise<Todo | undefined> {
+    const existing = this.todos.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...updates };
+    this.todos.set(id, updated);
+    return updated;
+  }
+
+  async deleteTodo(id: number): Promise<boolean> {
+    return this.todos.delete(id);
   }
 }
 
 export const storage = new MemStorage();
+
+// Добавим немного начальных данных для красоты
+async function seedData() {
+  await storage.createTodo({ title: "Купить молоко" });
+  const t2 = await storage.createTodo({ title: "Написать To-Do лист" });
+  await storage.updateTodo(t2.id, { completed: true });
+}
+
+seedData().catch(console.error);
