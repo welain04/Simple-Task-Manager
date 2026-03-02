@@ -1,16 +1,35 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTodos, useCreateTodo } from "@/hooks/use-todos";
 import { TodoItem } from "@/components/TodoItem";
 import { insertTodoSchema } from "@shared/schema";
 import { motion, AnimatePresence } from "framer-motion";
-import { PlusCircle, ListTodo, AlertCircle } from "lucide-react";
+import { PlusCircle, ListTodo, AlertCircle, Check, Filter } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Home() {
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   
   const { data: todos, isLoading, error: fetchError } = useTodos();
   const createMutation = useCreateTodo();
+
+  // Фильтрация и сортировка задач
+  const filteredTodos = useMemo(() => {
+    if (!todos) return [];
+    
+    let result = [...todos];
+    
+    // Применяем фильтр
+    if (filter === "active") {
+      result = result.filter(t => !t.completed);
+    } else if (filter === "completed") {
+      result = result.filter(t => t.completed);
+    }
+    
+    // Сортируем: сначала невыполненные, потом выполненные
+    return result.sort((a, b) => Number(a.completed) - Number(b.completed));
+  }, [todos, filter]);
 
   // Функция добавления новой задачи
   const handleAddTodo = (e: React.FormEvent) => {
@@ -120,6 +139,31 @@ export default function Home() {
           </AnimatePresence>
         </motion.form>
 
+        {/* Фильтры */}
+        {!isLoading && !fetchError && todos && todos.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6"
+          >
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Filter className="w-4 h-4" />
+              <span>Фильтр:</span>
+            </div>
+            <Tabs 
+              value={filter} 
+              onValueChange={(v) => setFilter(v as any)} 
+              className="w-full sm:w-auto"
+            >
+              <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:flex">
+                <TabsTrigger value="all" className="flex-1">Все</TabsTrigger>
+                <TabsTrigger value="active" className="flex-1">Активные</TabsTrigger>
+                <TabsTrigger value="completed" className="flex-1">Выполненные</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </motion.div>
+        )}
+
         {/* Скелетон загрузки */}
         {isLoading && (
           <div className="space-y-4">
@@ -140,26 +184,31 @@ export default function Home() {
         {/* Список задач */}
         {!isLoading && !fetchError && todos && (
           <motion.div layout className="space-y-1">
-            <AnimatePresence>
-              {todos.length === 0 ? (
+            <AnimatePresence mode="popLayout">
+              {filteredTodos.length === 0 ? (
                 <motion.div 
+                  key="empty"
                   initial={{ opacity: 0 }} 
                   animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   className="text-center py-16 text-muted-foreground"
                 >
                   <div className="bg-muted/50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Check strokeWidth={1.5} className="w-12 h-12 text-muted-foreground/50" />
                   </div>
-                  <h3 className="text-xl font-medium text-foreground mb-2">Всё сделано!</h3>
-                  <p>Добавьте новые задачи, чтобы начать свой день.</p>
+                  <h3 className="text-xl font-medium text-foreground mb-2">
+                    {filter === "all" ? "Всё сделано!" : "Ничего не найдено"}
+                  </h3>
+                  <p>
+                    {filter === "all" 
+                      ? "Добавьте новые задачи, чтобы начать свой день."
+                      : "Попробуйте изменить параметры фильтра."}
+                  </p>
                 </motion.div>
               ) : (
-                // Сортируем: сначала невыполненные, потом выполненные
-                [...todos]
-                  .sort((a, b) => Number(a.completed) - Number(b.completed))
-                  .map((todo) => (
-                    <TodoItem key={todo.id} todo={todo} />
-                  ))
+                filteredTodos.map((todo) => (
+                  <TodoItem key={todo.id} todo={todo} />
+                ))
               )}
             </AnimatePresence>
           </motion.div>
