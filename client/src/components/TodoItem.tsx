@@ -3,6 +3,17 @@ import { Check, Trash2, Pencil, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUpdateTodo, useDeleteTodo } from "@/hooks/use-todos";
 import type { Todo } from "@shared/schema";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TodoItemProps {
   todo: Todo;
@@ -56,10 +67,7 @@ export function TodoItem({ todo }: TodoItemProps) {
   };
 
   const handleDelete = () => {
-    // Небольшое подтверждение перед удалением (опционально, но хорошая практика)
-    if (window.confirm("Точно удалить эту задачу?")) {
-      deleteMutation.mutate(todo.id);
-    }
+    deleteMutation.mutate(todo.id);
   };
 
   return (
@@ -136,14 +144,31 @@ export function TodoItem({ todo }: TodoItemProps) {
             <Pencil className="w-4 h-4" />
           </button>
         )}
-        
-        <button
-          onClick={handleDelete}
-          className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors"
-          title="Удалить"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors"
+              title="Удалить"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Удалить задачу?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Вы уверены, что хотите удалить эту задачу? Это действие нельзя будет отменить.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Отмена</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>
+                Удалить
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </motion.div>
   );
