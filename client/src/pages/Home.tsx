@@ -17,18 +17,16 @@ export default function Home() {
   // Фильтрация и сортировка задач
   const filteredTodos = useMemo(() => {
     if (!todos) return [];
-    
-    let result = [...todos];
-    
-    // Применяем фильтр
-    if (filter === "active") {
-      result = result.filter(t => !t.completed);
-    } else if (filter === "completed") {
-      result = result.filter(t => t.completed);
-    }
-    
-    // Сортируем: сначала невыполненные, потом выполненные
-    return result.sort((a, b) => Number(a.completed) - Number(b.completed));
+
+    const matchesFilter = (todo: (typeof todos)[number]) => {
+      if (filter === "active") return !todo.completed;
+      if (filter === "completed") return todo.completed;
+      return true; // остальные значения filter — показываем все
+    };
+
+    return [...todos]
+      .filter(matchesFilter)
+      .sort((a, b) => Number(a.completed) - Number(b.completed));
   }, [todos, filter]);
 
   // Функция добавления новой задачи
