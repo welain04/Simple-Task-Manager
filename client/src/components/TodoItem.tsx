@@ -62,6 +62,19 @@ export function TodoItem({ todo }: TodoItemProps) {
     }
   };
 
+  const createdAtText = (() => {
+    const raw = todo.createdAt;
+    const date = raw ? new Date(raw) : null;
+    if (!date || Number.isNaN(date.getTime())) return null;
+    return new Intl.DateTimeFormat("ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  })();
+
   return (
     <motion.div
       layout // Плавная анимация изменения позиции в списке
@@ -114,6 +127,12 @@ export function TodoItem({ todo }: TodoItemProps) {
           >
             {todo.title}
           </span>
+        )}
+
+        {createdAtText && (
+          <div className="mt-1 text-xs text-muted-foreground">
+            Создано: {createdAtText}
+          </div>
         )}
       </div>
 

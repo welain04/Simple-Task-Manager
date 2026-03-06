@@ -7,6 +7,7 @@ export const todos = pgTable("todos", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   completed: boolean("completed").default(false).notNull(),
+  createdAt: text("created_at").notNull(),
 });
 
 // Схема для добавления новой задачи (включает валидацию)
