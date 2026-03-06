@@ -26,6 +26,27 @@ export function TodoItem({ todo }: TodoItemProps) {
     }
   }, [isEditing]);
 
+  // Дата и время создания задачи
+  const createdAtRaw = (todo as any).createdAt;
+  const createdAt =
+    createdAtRaw ? new Date(createdAtRaw) : null;
+  const hasValidCreatedAt =
+    createdAt instanceof Date && !isNaN(createdAt.getTime());
+
+  const createdAtDate = hasValidCreatedAt
+    ? createdAt.toLocaleDateString("ru-RU", {
+        day: "numeric",
+        month: "long",
+      })
+    : null;
+
+  const createdAtTime = hasValidCreatedAt
+    ? createdAt.toLocaleTimeString("ru-RU", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+
   // Переключение статуса (выполнено/не выполнено)
   const toggleCompleted = () => {
     updateMutation.mutate({
@@ -117,8 +138,14 @@ export function TodoItem({ todo }: TodoItemProps) {
         )}
       </div>
 
-      {/* Кнопки действий (редактировать/удалить) */}
-      <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+      {/* Кнопки действий (редактировать/удалить) и дата создания */}
+      <div className="flex-shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+        {createdAtDate && createdAtTime && (
+          <div className="flex flex-col items-end text-[11px] leading-tight text-muted-foreground/80 whitespace-nowrap mr-1">
+            <span>{createdAtDate}</span>
+            <span>{`в ${createdAtTime}`}</span>
+          </div>
+        )}
         {isEditing ? (
           <button
             onClick={handleCancelEdit}
